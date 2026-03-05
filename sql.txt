@@ -1,0 +1,51 @@
+﻿
+WITH MasterData AS (
+    SELECT 
+        s.sale_date AS Календар,
+        s.store AS Магазин,
+        s.bread_name AS Вид_хліба,
+        s.counte AS Кількість_продано,
+        s.total_sum AS Сума_продажів,
+        COALESCE(w.waste_qty, 0) AS Кількість_списання,
+        c."cost" AS Собівартість_од,
+
+        -- Розрахунок повної собівартості (продане + списане)
+        ((s.counte + COALESCE(w.waste_qty, 0)) * c."cost") AS Загальна_собівартість,
+
+        -- Чистий прибуток
+        (s.total_sum - ((s.counte + COALESCE(w.waste_qty, 0)) * c."cost")) AS Чистий_прибуток
+    FROM sales s
+    LEFT JOIN waste w 
+        ON s.store = w.store 
+        AND s.bread_name = w.bread_name 
+        AND s.sale_date = w.sale_date
+    LEFT JOIN costs c 
+        ON s.bread_name = c.bread_name
+),
+ABC_Prep AS (
+    SELECT 
+        Вид_хліба,
+        SUM(Чистий_прибуток) AS Total_Bread_Profit,
+        SUM(SUM(Чистий_прибуток)) OVER() AS Grand_Total_Profit
+    FROM MasterData
+    GROUP BY Вид_хліба
+)
+SELECT 
+    m.*,
+
+    -- Розрахунок Waste Ratio (для 3-го пункту)
+    CASE 
+        WHEN (m.Кількість_продано + m.Кількість_списання) > 0 
+        THEN ROUND(CAST(m.Кількість_списання AS NUMERIC) / (m.Кількість_продано + m.Кількість_списання) * 100, 2)
+        ELSE 0 
+    END AS Відсоток_списання,
+
+    -- Частка в прибутку (для ABC-аналізу)
+    CASE 
+        WHEN abc.Grand_Total_Profit > 0 
+        THEN ROUND(CAST(abc.Total_Bread_Profit AS NUMERIC) / abc.Grand_Total_Profit * 100, 2)
+        ELSE 0 
+    END AS Частка_у_прибутку_відс
+FROM MasterData m
+JOIN ABC_Prep abc ON m.Вид_хліба = abc.Вид_хліба
+ORDER BY m.Календар, m.Магазин;
