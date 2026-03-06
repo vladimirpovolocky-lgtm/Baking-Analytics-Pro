@@ -1,6 +1,6 @@
 
 # 🥖 Baking Analytics Pro: End-to-End Efficiency Dashboard
-<img width="1279" height="940" alt="Снимок PNG1" src="https://github.com/user-attachments/assets/9b602aeb-f61c-4c6e-b430-03cc06412c5c" />
+<img width="1232" height="900" alt="Снимок PNG1" src="https://github.com/user-attachments/assets/4498d27d-fd57-4bfc-a98e-b7df7399c17d" />
 
 
 
